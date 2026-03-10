@@ -20,7 +20,7 @@
 
 ## Windows
 
-Windows 免依赖版本会通过 GitHub Releases 提供，下载 release 里的 `谷歌验证器-windows-amd64.zip`，解压后直接运行 `谷歌验证器.exe` 即可。
+Windows 免依赖版本会通过 GitHub Releases 提供，下载 release 里的 `gugeyanzhengqi-windows-amd64.zip`，解压后直接运行 `谷歌验证器.exe` 即可。
 
 ## 使用方式
 

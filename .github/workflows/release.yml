@@ -26,9 +26,9 @@ jobs:
 
       - name: Package exe
         shell: pwsh
-        run: Compress-Archive -Path 'dist/谷歌验证器.exe' -DestinationPath 'dist/谷歌验证器-windows-amd64.zip'
+        run: Compress-Archive -Path 'dist/谷歌验证器.exe' -DestinationPath 'dist/gugeyanzhengqi-windows-amd64.zip'
 
       - name: Upload release asset
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload ${{ github.event.release.tag_name }} 'dist/谷歌验证器-windows-amd64.zip' --clobber
+        run: gh release upload ${{ github.event.release.tag_name }} 'dist/gugeyanzhengqi-windows-amd64.zip' --clobber
