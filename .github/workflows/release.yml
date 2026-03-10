@@ -22,13 +22,13 @@ jobs:
         run: python -m pip install --upgrade pip pyinstaller
 
       - name: Build exe
-        run: pyinstaller --noconfirm --clean --onefile --windowed --name gugeyanzhengqi main.py
+        run: pyinstaller --noconfirm --clean --onefile --windowed --name "谷歌验证器" main.py
 
       - name: Package exe
         shell: pwsh
-        run: Compress-Archive -Path dist/gugeyanzhengqi.exe -DestinationPath dist/gugeyanzhengqi-windows-amd64.zip
+        run: Compress-Archive -Path 'dist/谷歌验证器.exe' -DestinationPath 'dist/谷歌验证器-windows-amd64.zip'
 
       - name: Upload release asset
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload ${{ github.event.release.tag_name }} dist/gugeyanzhengqi-windows-amd64.zip --clobber
+        run: gh release upload ${{ github.event.release.tag_name }} 'dist/谷歌验证器-windows-amd64.zip' --clobber

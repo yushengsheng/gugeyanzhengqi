@@ -272,6 +272,8 @@ class AuthenticatorApp(tk.Tk):
         self.page_size = 5
         self.page_start = 0
         self.is_topmost = False
+        self._drag_start_x = 0
+        self._drag_start_y = 0
 
         self._build_ui()
         self._load_saved_input()
@@ -308,6 +310,20 @@ class AuthenticatorApp(tk.Tk):
             pady=0,
         )
         self.pin_button.place(relx=1.0, x=-8, y=8, anchor="ne")
+
+        self.drag_handle = tk.Label(
+            self,
+            text="✦",
+            bg="#ECECEC",
+            fg="#9A9A9A",
+            font=("PingFang SC", 8, "bold"),
+            cursor="fleur",
+            padx=0,
+            pady=0,
+        )
+        self.drag_handle.place(relx=1.0, rely=1.0, x=-4, y=-3, anchor="se")
+        self.drag_handle.bind("<ButtonPress-1>", self._start_window_drag)
+        self.drag_handle.bind("<B1-Motion>", self._drag_window)
 
         left = tk.Frame(main, bg="#ECECEC")
         left.grid(row=0, column=0, sticky="nsew")
@@ -408,6 +424,11 @@ class AuthenticatorApp(tk.Tk):
         widget.bind("<Button-4>", self._on_mousewheel_linux)
         widget.bind("<Button-5>", self._on_mousewheel_linux)
 
+    def _bind_result_scroll_recursive(self, widget: tk.Widget) -> None:
+        self._bind_result_scroll(widget)
+        for child in widget.winfo_children():
+            self._bind_result_scroll_recursive(child)
+
     def _change_page(self, direction: int) -> None:
         if len(self.entries) <= self.page_size:
             return
@@ -470,6 +491,19 @@ class AuthenticatorApp(tk.Tk):
             fg="#111111" if self.is_topmost else "#5A5A5A",
         )
 
+    def _start_window_drag(self, event) -> None:
+        self._drag_start_x = event.x_root
+        self._drag_start_y = event.y_root
+
+    def _drag_window(self, event) -> None:
+        delta_x = event.x_root - self._drag_start_x
+        delta_y = event.y_root - self._drag_start_y
+        next_x = self.winfo_x() + delta_x
+        next_y = self.winfo_y() + delta_y
+        self.geometry(f"+{next_x}+{next_y}")
+        self._drag_start_x = event.x_root
+        self._drag_start_y = event.y_root
+
     def _fit_window_height(self) -> None:
         self.update_idletasks()
         needed_height = self.winfo_reqheight()
@@ -531,7 +565,10 @@ class AuthenticatorApp(tk.Tk):
         visible_entries = self.entries[self.page_start : self.page_start + self.page_size]
         for offset, entry in enumerate(visible_entries, start=1):
             index = self.page_start + offset
-            row = tk.Frame(self.result_body, bg="white", padx=2, pady=6)
+            row_block = tk.Frame(self.result_body, bg="white")
+            row_block.pack(fill="x")
+
+            row = tk.Frame(row_block, bg="white", padx=2, pady=6)
             row.pack(fill="x")
 
             top = tk.Frame(row, bg="white")
@@ -593,7 +630,7 @@ class AuthenticatorApp(tk.Tk):
             )
             copy_button.pack(side="right", padx=(0, 0))
 
-            separator = tk.Frame(self.result_body, bg="#EEEEEE", height=1)
+            separator = tk.Frame(row_block, bg="#EEEEEE", height=1)
             separator.pack(fill="x", padx=2)
 
             self.row_widgets[entry.id] = {
@@ -604,24 +641,18 @@ class AuthenticatorApp(tk.Tk):
                 "copy_button": copy_button,
             }
 
-            self._bind_result_scroll(row)
-            self._bind_result_scroll(top)
-            self._bind_result_scroll(left_label)
-            self._bind_result_scroll(code_line)
-            self._bind_result_scroll(code_label)
-            self._bind_result_scroll(remain_label)
-            self._bind_result_scroll(copy_button)
-            self._bind_copy(row, entry.id)
-            self._bind_copy(top, entry.id)
-            self._bind_copy(code_line, entry.id)
-            self._bind_copy(left_label, entry.id)
-            self._bind_copy(remain_label, entry.id)
-            self._bind_copy(code_label, entry.id)
+            self._bind_result_scroll_recursive(row_block)
+            self._bind_copy_recursive(row_block, entry.id)
 
         self.after_idle(self._fit_window_height)
 
     def _bind_copy(self, widget: tk.Widget, entry_id: str) -> None:
-        widget.bind("<Button-1>", lambda _event, item_id=entry_id: self.copy_code(item_id))
+        widget.bind("<Button-1>", lambda _event, item_id=entry_id: self.copy_code(item_id), add="+")
+
+    def _bind_copy_recursive(self, widget: tk.Widget, entry_id: str) -> None:
+        self._bind_copy(widget, entry_id)
+        for child in widget.winfo_children():
+            self._bind_copy_recursive(child, entry_id)
 
     def copy_code(self, entry_id: str) -> None:
         entry = next((item for item in self.entries if item.id == entry_id), None)
